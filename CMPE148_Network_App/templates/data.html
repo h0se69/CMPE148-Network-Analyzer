@@ -1,0 +1,105 @@
+{% extends "navbar.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Source IPs</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>View DNS Host Name</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ip, value in list_of_ips["source_ips"].items() %}
+                    <tr>
+                        <td>{{ ip }}</td>
+                        <td id='hostNameCell_{{ ip }}'>
+                            <button type="button" class="btn btn-dark" onclick="getDnsHostName('{{ ip }}')">Get DNS Host Name</button>
+                        </td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-4">
+            <h2>Destination IPs</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ip, value in list_of_ips["destination_ips"].items() %}
+                    <tr>
+                        <td>{{ ip }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-4">
+            <h2>Source-Destination IPs</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ip, value in list_of_ips["source_destination_ips"].items() %}
+                    <tr>
+                        <td>{{ ip }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <script>
+            function getDnsHostName(ip) {
+                var hostNameCell = document.getElementById(`hostNameCell_${ip}`);
+
+                if (hostNameCell) {
+                    hostNameCell.innerHTML = 'Loading...';
+                    
+                    $.ajax({
+                    url: `/api/get-dns`,
+                    type: "POST",
+                    data: JSON.stringify({ "ip" : ip }),
+                    contentType: "application/json;charset=UTF-8",
+                    success: function(response) {
+                        var hostNameCell = document.getElementById(`hostNameCell_${ip}`);
+                        var response_dns = response.dns_name
+                        if (hostNameCell) {
+                            hostNameCell.innerHTML = response_dns;
+                        }
+                    },
+                    error: function(error) {
+                        console.error(`Error: ${error}`);
+                    },
+                    complete: function(msg) {
+                        console.error(`Complete msg: ${msg}`); // added incase it gets stuck
+                    }
+                });
+                }
+                
+            }
+        </script>
+    </div>
+</div>
+
+
+
+{% endblock %}
