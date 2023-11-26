@@ -35,6 +35,12 @@ def upload_file():
     return render_template('home.html')
 
 
+@flaskObj.route('/bandwidth')
+def bandwidth():
+    # data processing needed for the bandwidth page
+    return render_template('bandwidth.html')
+
+
 @flaskObj.route("/api/get-dns", methods=['POST'])
 def get_dns_host_name():
     data = request.get_json()
