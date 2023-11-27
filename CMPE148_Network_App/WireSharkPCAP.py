@@ -5,7 +5,6 @@ import json
 
 socket.setdefaulttimeout(5) 
 
-
 tcp_services = {
     "HTTP": 80,
     "HTTPS": 443,
@@ -43,18 +42,6 @@ def check_for_DNS(packet):
         return dns_packet
     else:
         return False
-
-
-# def get_DNS_host_name(packet):
-#     is_valid_DNS = check_for_DNS(packet)
-#     if is_valid_DNS:
-#         dns_packet = is_valid_DNS
-#         try:
-#             host_name = dns_packet.qd.qname.decode("utf-8")
-#         except:
-#             host_name = "N/A Error"
-#     else:
-#         return False
 
 def get_DNS_host_name(ip_address):
     try:
@@ -99,7 +86,6 @@ def get_list_of_ips(packets):
         "destination_ips": sort_by_highest_frequency(destination_counter), 
         "source_destination_ips": sort_by_highest_frequency(source_to_destination_counter)
     }
-    
     return return_data
 
 
@@ -113,8 +99,6 @@ def check_for_UDP(packet):
     else: 
         return False
 
-
-
 def check_for_TCP(packet):
     if TCP in packet:
         tcp_layer = packet[TCP]
@@ -122,34 +106,9 @@ def check_for_TCP(packet):
     else: 
         return False
 
-
-
 def read_pcap_file(pcap_file_path):
     packets = rdpcap(pcap_file_path)
     return packets
-
-
-def check_all_packet_data(packets):
-    for packet in packets:
-        is_valid_TCP = check_for_TCP(is_valid_UDP)
-        is_valid_UDP = check_for_UDP(is_valid_UDP)
-
-def get_tcp_data(tcp_packet):
-    pass
-
-
-
-# def get_all_protocols(packets):
-    # protocols = set()
-
-    # for packet in packets:
-    #     for layer in packet.layers():
-    #         layer_name = strip_packet_layer_name(layer)
-    #         protocols.add(layer_name)
-    # return protocols
-
-def get_total_packet_count(packets):
-    return len(packets)
 
 # 
 # IP
@@ -159,31 +118,6 @@ def get_IP_source_ip(IP_Packet):
 
 def get_IP_destination_ip(IP_Packet):
     return IP_Packet.dst
-
-def get_ip_protocol(IP_Packet):
-    return IP_Packet.proto
-
-# 
-# UDP
-# 
-
-def get_UDP_source_port(UDP_Packet):
-    return UDP_Packet.sport
-
-def get_UDP_destination_port(UDP_Packet):
-    return UDP_Packet.dport
-
-def get_UDP_checksum(UDP_Packet):
-    return UDP_Packet.checksum
-
-# 
-# TCP
-# 
-def get_TCP_source_port(TCP_Packet):
-    return TCP_Packet.sport
-
-def get_TCP_destination_port(TCP_Packet):
-    return TCP_Packet.dport
 
 
 def strip_packet_layer_name(layer):
@@ -198,10 +132,34 @@ def strip_packet_layer_name(layer):
         return layer
 
 
-# packets = read_pcap_file("web_get.pcap")
-# number_of_address_connections = get_list_of_ips(packets)
+#
+# Packet Data
+#
+# def get_packet_sizes(packets):
+def get_packet_sizes(packets, page, packets_per_page=200):
 
-# for source_ip in number_of_address_connections["source_ips"]:
-#     print(get_DNS_host_name(source_ip))
+    total_packets = len(packets)
+    total_pages = (total_packets + packets_per_page - 1) // packets_per_page 
 
-# print(json.dumps(number_of_address_connections, indent=4))
+
+    start_idx = (page - 1) * packets_per_page
+    end_idx = start_idx + packets_per_page
+    packets_on_page = packets[start_idx:end_idx]
+
+    packet_list = []
+
+    for id, packet in enumerate(packets_on_page):
+        packet_size = len(packet)
+        
+        source_ip = packet[IP].src if packet.haslayer(IP) else None
+        destination_ip = packet[IP].dst if packet.haslayer(IP) else None
+
+        packet_info = {
+                    "index": f"{start_idx + id + 1}",
+                    "size": packet_size,
+                    "source_ip": source_ip,
+                    "destination_ip": destination_ip,
+                }
+        packet_list.append(packet_info)
+    
+    return packet_list, total_pages

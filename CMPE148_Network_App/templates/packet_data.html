@@ -1,0 +1,53 @@
+{% extends "navbar.html" %}
+
+{% block content %}
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+</head>
+
+<h1>Packet Information</h1>
+
+<table class="table table-striped" id="packet_info_table">
+    <thead>
+        <tr>
+            <th>Packet ID</th>
+            <th>Packet Size (Bytes)</th>
+            <th>Source IP</th>
+            <th>Destination IP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for packet in packet_info_list %}
+        <tr>
+            <td>{{ packet.index }}</td>
+            <td>{{ packet.size }}</td>
+            <td>{{ packet.source_ip }}</td>
+            <td>{{ packet.destination_ip }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div>
+    {% if page > 1 %}
+    <a href="{{ url_for('view_packets', page=page-1) }}">Previous Page</a>
+    {% endif %}
+    <span>Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %} <a href="{{ url_for('view_packets', page=page+1) }}">Next Page</a>
+        {% endif %}
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#packet_info_table').DataTable({
+            "order": [[1, "desc"]],
+            "searching": false,
+            "info": false,
+            "paging": false
+        });
+    });
+</script>
+{% endblock %}

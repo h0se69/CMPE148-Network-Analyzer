@@ -1,12 +1,20 @@
 {% extends "navbar.html" %}
 
 {% block content %}
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+</head>
 
 <div class="container">
+    <br>
+    <h2>View Packet IP Communication</h2>
+    <br>
     <div class="row">
         <div class="col-md-4">
             <h2>Source IPs</h2>
-            <table class="table table-striped">
+            <table class="table table-striped"  id="source_ips_table">
                 <thead>
                     <tr>
                         <th>IP Address</th>
@@ -19,7 +27,8 @@
                     <tr>
                         <td>{{ ip }}</td>
                         <td id='hostNameCell_{{ ip }}'>
-                            <button type="button" class="btn btn-dark" onclick="getDnsHostName('{{ ip }}')">Get DNS Host Name</button>
+                            <button type="button" class="btn btn-dark" onclick="getDnsHostName('{{ ip }}')">Get DNS Host
+                                Name</button>
                         </td>
                         <td>{{ value }}</td>
                     </tr>
@@ -30,7 +39,7 @@
 
         <div class="col-md-4">
             <h2>Destination IPs</h2>
-            <table class="table table-striped">
+            <table class="table table-striped" id="destination_ips_table">
                 <thead>
                     <tr>
                         <th>IP Address</th>
@@ -50,7 +59,7 @@
 
         <div class="col-md-4">
             <h2>Source-Destination IPs</h2>
-            <table class="table table-striped">
+            <table class="table table-striped" id="source_destination_ips_table">
                 <thead>
                     <tr>
                         <th>IP Address</th>
@@ -67,34 +76,59 @@
                 </tbody>
             </table>
         </div>
+
+        <script>
+            $(document).ready(function() {
+              $('#source_ips_table').DataTable({
+                "order": [[1, "desc"]],
+              });
+            });
+        </script>
+        
+        <script>
+            $(document).ready(function() {
+              $('#destination_ips_table').DataTable({
+                "order": [[1, "desc"]],
+              });
+            });
+        </script>
+
+        <script>
+            $(document).ready(function() {
+            $('#source_destination_ips_table').DataTable({
+                "order": [[1, "desc"]],
+            });
+            });
+        </script>
+
         <script>
             function getDnsHostName(ip) {
                 var hostNameCell = document.getElementById(`hostNameCell_${ip}`);
 
                 if (hostNameCell) {
                     hostNameCell.innerHTML = 'Loading...';
-                    
+
                     $.ajax({
-                    url: `/api/get-dns`,
-                    type: "POST",
-                    data: JSON.stringify({ "ip" : ip }),
-                    contentType: "application/json;charset=UTF-8",
-                    success: function(response) {
-                        var hostNameCell = document.getElementById(`hostNameCell_${ip}`);
-                        var response_dns = response.dns_name
-                        if (hostNameCell) {
-                            hostNameCell.innerHTML = response_dns;
+                        url: `/api/get-dns`,
+                        type: "POST",
+                        data: JSON.stringify({ "ip": ip }),
+                        contentType: "application/json;charset=UTF-8",
+                        success: function (response) {
+                            var hostNameCell = document.getElementById(`hostNameCell_${ip}`);
+                            var response_dns = response.dns_name
+                            if (hostNameCell) {
+                                hostNameCell.innerHTML = response_dns;
+                            }
+                        },
+                        error: function (error) {
+                            console.error(`Error: ${error}`);
+                        },
+                        complete: function (msg) {
+                            console.error(`Complete msg: ${msg}`); // added incase it gets stuck
                         }
-                    },
-                    error: function(error) {
-                        console.error(`Error: ${error}`);
-                    },
-                    complete: function(msg) {
-                        console.error(`Complete msg: ${msg}`); // added incase it gets stuck
-                    }
-                });
+                    });
                 }
-                
+
             }
         </script>
     </div>
