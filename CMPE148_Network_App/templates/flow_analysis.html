@@ -1,0 +1,69 @@
+<!-- flow_analysis.html -->
+
+{% extends "navbar.html" %}
+
+{% block content %}
+
+<div class="chart-container">
+    <h1>Flow Analysis</h1>
+
+    <!-- Relevant flow analysis metrics -->
+    <p>Total Flows: {{ flow_data.total_flows }}</p>
+    <p>Most Common Source IP: {{ flow_data.most_common_source_ip }}</p>
+    <p>Most Common Destination IP: {{ flow_data.most_common_destination_ip }}</p>
+
+    <!-- Chart to visualize flow analysis -->
+    <canvas id="flowAnalysisChart" width="800" height="500"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        function createFlowAnalysisChart() {
+            var timeLabels = {{ flow_data.flow_chart_data.time_labels|tojson }};
+            var trafficValues = {{ flow_data.flow_chart_data.flow_values|tojson }};  // Corrected
+
+            // Flow analysis chart
+            var ctx = document.getElementById('flowAnalysisChart').getContext('2d');
+            var flowAnalysisChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Traffic (bytes)',
+                        data: trafficValues,  // Corrected
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Network Traffic Flow Analysis(Time-Traffic)',
+                            font: {
+                                size: 20
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left'
+                        }
+                    }
+                },
+            });
+        }
+
+        // Use setTimeout to delay the execution and potentially avoid the Matplotlib warning
+        setTimeout(createFlowAnalysisChart, 100);
+    </script>
+</div>
+
+{% endblock %}

@@ -2,6 +2,9 @@ import socket
 from scapy.all import *
 from scapy.all import IP, TCP, UDP, DNS, DNSQR
 import json
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 socket.setdefaulttimeout(5) 
 
@@ -44,17 +47,6 @@ def check_for_DNS(packet):
     else:
         return False
 
-
-# def get_DNS_host_name(packet):
-#     is_valid_DNS = check_for_DNS(packet)
-#     if is_valid_DNS:
-#         dns_packet = is_valid_DNS
-#         try:
-#             host_name = dns_packet.qd.qname.decode("utf-8")
-#         except:
-#             host_name = "N/A Error"
-#     else:
-#         return False
 
 def get_DNS_host_name(ip_address):
     try:
@@ -138,16 +130,6 @@ def get_tcp_data(tcp_packet):
     pass
 
 
-
-# def get_all_protocols(packets):
-    # protocols = set()
-
-    # for packet in packets:
-    #     for layer in packet.layers():
-    #         layer_name = strip_packet_layer_name(layer)
-    #         protocols.add(layer_name)
-    # return protocols
-
 def get_total_packet_count(packets):
     return len(packets)
 
@@ -198,10 +180,81 @@ def strip_packet_layer_name(layer):
         return layer
 
 
-# packets = read_pcap_file("web_get.pcap")
-# number_of_address_connections = get_list_of_ips(packets)
+# 
+def calculate_total_data_transferred(packets):
+    total_data = 0
+    for packet in packets:
+        if IP in packet:
+            total_data += len(packet)
+    return total_data
 
-# for source_ip in number_of_address_connections["source_ips"]:
-#     print(get_DNS_host_name(source_ip))
+def prepare_flow_analysis_chart(packets):
+    flows = {}
 
-# print(json.dumps(number_of_address_connections, indent=4))
+    # Keep track of the starting time
+    start_time = packets[0].time if packets else 0
+
+    for packet in packets:
+        if IP in packet:
+            source_ip = get_IP_source_ip(packet)
+            destination_ip = get_IP_destination_ip(packet)
+            flow_key = f"{source_ip} > {destination_ip}"
+
+            if flow_key not in flows:
+                flows[flow_key] = {'time_labels': [], 'traffic_values': []}
+
+            # Calculate relative time and traffic
+            relative_time = packet.time - start_time
+            flows[flow_key]['time_labels'].append(relative_time)
+            flows[flow_key]['traffic_values'].append(len(packet))
+
+    return flows
+
+
+def get_most_common_ip(flows, ip_type):
+    ip_counter = {}
+
+    for flow_key, flow_data in flows.items():
+        ip = flow_key.split(' > ')[0] if ip_type == 'source' else flow_key.split(' > ')[1]
+        if ip not in ip_counter:
+            ip_counter[ip] = 1
+        else:
+            ip_counter[ip] += 1
+
+    most_common_ip = max(ip_counter, key=ip_counter.get, default="No IPs found")
+    return most_common_ip
+
+def extract_flow_chart_data(flows):
+    time_labels = []
+    all_flow_values = []
+
+    for flow_key, flow_data in flows.items():
+        time_labels = flow_data['time_labels']
+        flow_values = flow_data['traffic_values']
+        all_flow_values.append(flow_values)
+
+    # Find the maximum length among all flow values and truncate the others
+    max_length = max(len(flow_values) for flow_values in all_flow_values)
+    truncated_flow_values = [flow_values[:max_length] for flow_values in all_flow_values]
+
+    # Calculate the average flow values at each time point
+    averaged_flow_values = [sum(flow_values) / len(flow_values) for flow_values in zip(*truncated_flow_values)]
+
+    return {
+        'time_labels': time_labels,
+        'flow_values': averaged_flow_values,
+    }
+
+
+def perform_flow_analysis(pcap_file_path):
+    packets = rdpcap(pcap_file_path)
+    flows = prepare_flow_analysis_chart(packets)
+    flow_chart_data = extract_flow_chart_data(flows)
+    print("flows:",flows)
+    return {
+        'total_flows': len(flows),
+        'most_common_source_ip': get_most_common_ip(flows, 'source'),
+        'most_common_destination_ip': get_most_common_ip(flows, 'destination'),
+        'flow_chart_data': flow_chart_data,
+    }
+# 
