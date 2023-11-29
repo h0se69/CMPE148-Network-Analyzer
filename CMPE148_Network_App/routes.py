@@ -27,23 +27,12 @@ def upload_file():
             uploaded_user_file = file.read()
             file_data = io.BytesIO(uploaded_user_file)
 
-            # Use the WireSharkPCAP module functions
             packets = read_pcap_file(file_data)
             stored_packets = packets
-
             list_of_ips = get_list_of_ips(packets)
 
             session['list_of_ips'] = list_of_ips
             session['is_upload_file_present'] = True
-
-            # Save the uploaded pcap file to a temporary location
-            # You might want to store it in a more organized manner in a production environment
-            temp_pcap_path = "temp_upload.pcap"
-            with open(temp_pcap_path, 'wb') as temp_pcap_file:
-                temp_pcap_file.write(uploaded_user_file)
-
-            # Store the temp_pcap_path in the session for later use
-            session['temp_pcap_path'] = temp_pcap_path
 
             return redirect(url_for('view_packet_ips'))
         except Exception as e:
@@ -55,7 +44,7 @@ def upload_file():
 def view_packet_ips():
     global stored_packets
     list_of_ips = session.get('list_of_ips', {})
-    is_upload_file_present = session.get('is_upload_file_present', {})
+    is_upload_file_present = session.get('is_upload_file_present', False)
 
     if(list_of_ips != {} and is_upload_file_present and stored_packets):
         return render_template('data.html', list_of_ips=list_of_ips)
@@ -66,7 +55,7 @@ def view_packet_ips():
 @flaskObj.route('/view-packet-data/packets/<int:page>')
 def view_packets(page=1):
     global stored_packets
-    is_upload_file_present = session.get('is_upload_file_present', {})
+    is_upload_file_present = session.get('is_upload_file_present', False)
 
     if stored_packets and is_upload_file_present:
         packet_info_list, total_pages = get_packet_sizes(stored_packets, page)
@@ -82,35 +71,17 @@ def get_dns_host_name():
     dns_name = get_DNS_host_name(ip_address)
     return jsonify({'dns_name': dns_name})
 
-# @flaskObj.route("/data")
-# def data():
-#     # Retrieve the temp_pcap_path from the session
-#     temp_pcap_path = session.get('temp_pcap_path')
 
-#     if temp_pcap_path:
-#         # Use WireSharkPCAP functions for data analysis
-#         packets = read_pcap_file(temp_pcap_path)
-#         list_of_ips = get_list_of_ips(packets)
-
-#         return render_template('data.html', list_of_ips=list_of_ips)
-#     else:
-#         # If temp_pcap_path is not available, redirect to home.html
-#         return redirect('/')
-
-
-@flaskObj.route("/flow_analysis")  # Change the route to something more appropriate like "/flow_analysis"
+@flaskObj.route("/flow-analysis")
 def flow_analysis():
-    # Retrieve the temp_pcap_path from the session
-    temp_pcap_path = session.get('temp_pcap_path')
+    global stored_packets
+    is_upload_file_present = session.get('is_upload_file_present', False)
 
-    if temp_pcap_path:
-        # Use new flow analysis function
-        flow_data = perform_flow_analysis(temp_pcap_path)
-
+    if stored_packets and is_upload_file_present:
+        flow_data = perform_flow_analysis(stored_packets)
         return render_template('flow_analysis.html', flow_data=flow_data)
     else:
-        # If temp_pcap_path is not available, redirect to home.html
-        return redirect('/')
+        return render_template('error.html', error_msg= "Please upload a PCAP file to see Flow Anaylsis Chart")
 
 @flaskObj.route("/")
 def home():
