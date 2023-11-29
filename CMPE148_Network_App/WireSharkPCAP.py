@@ -2,6 +2,10 @@ import socket
 from scapy.all import *
 from scapy.all import IP, TCP, UDP, DNS, DNSQR
 import json
+import matplotlib
+# matplotlib.use('Agg')
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 socket.setdefaulttimeout(5) 
 
@@ -42,6 +46,7 @@ def check_for_DNS(packet):
         return dns_packet
     else:
         return False
+
 
 def get_DNS_host_name(ip_address):
     try:
@@ -110,6 +115,19 @@ def read_pcap_file(pcap_file_path):
     packets = rdpcap(pcap_file_path)
     return packets
 
+
+# def check_all_packet_data(packets):
+#     for packet in packets:
+#         is_valid_TCP = check_for_TCP(is_valid_UDP)
+#         is_valid_UDP = check_for_UDP(is_valid_UDP)
+
+# def get_tcp_data(tcp_packet):
+#     pass
+
+
+# def get_total_packet_count(packets):
+#     return len(packets)
+
 # 
 # IP
 # 
@@ -131,11 +149,9 @@ def strip_packet_layer_name(layer):
     except:
         return layer
 
-
 #
 # Packet Data
 #
-# def get_packet_sizes(packets):
 def get_packet_sizes(packets, page, packets_per_page=200):
 
     total_packets = len(packets)
@@ -163,3 +179,60 @@ def get_packet_sizes(packets, page, packets_per_page=200):
         packet_list.append(packet_info)
     
     return packet_list, total_pages
+
+
+def calculate_total_data_transferred(packets):
+    total_data = 0
+    for packet in packets:
+        if IP in packet:
+            total_data += len(packet)
+    return total_data
+
+def prepare_flow_analysis_chart(packets):
+    flows = {}
+    start_time = packets[0].time if packets else 0
+
+    for packet in packets:
+        if IP in packet:
+            source_ip_mac = get_IP_source_ip(packet)
+            destination_ip_mac = get_IP_destination_ip(packet)
+            source_ip = mac_to_ip4(source_ip_mac)
+            destination_ip = mac_to_ip4(destination_ip_mac)
+
+            flow_key = f"{source_ip} > {destination_ip}"
+
+            if flow_key not in flows:
+                flows[flow_key] = {'time_labels': [], 'traffic_values': []}
+
+            relative_time = packet.time - start_time
+            flows[flow_key]['time_labels'].append(relative_time)
+            flows[flow_key]['traffic_values'].append(len(packet))
+    return flows
+
+
+def get_most_common_ip(flows, ip_type):
+    ip_counter = {}
+
+    for flow_key, flow_data in flows.items():
+        ip = flow_key.split(' > ')[0] if ip_type == 'source' else flow_key.split(' > ')[1]
+        if ip not in ip_counter:
+            ip_counter[ip] = 1
+        else:
+            ip_counter[ip] += 1
+    most_common_ip = max(ip_counter, key=ip_counter.get, default="No IPs found")
+    return most_common_ip
+
+def perform_flow_analysis(packets):
+    flows = prepare_flow_analysis_chart(packets)
+    return {
+        'total_flows': len(flows),
+        'most_common_source_ip': get_most_common_ip(flows, 'source'),
+        'most_common_destination_ip': get_most_common_ip(flows, 'destination'),
+        'flow_chart_data': flows,
+    }
+ 
+
+def mac_to_ip4(mac):
+    bytes_list = [int(byte, 16) for byte in mac.split(':')[-6:]]
+    ipv4_address = ".".join(map(str, bytes_list[-4:]))
+    return ipv4_address

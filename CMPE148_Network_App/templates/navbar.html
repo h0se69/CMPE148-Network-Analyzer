@@ -22,17 +22,23 @@
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{{ url_for('view_packets', page=1) }}"
-                        style="margin-right: 300px;">View Packet Information</a>
+                        style="margin-right: 3rem;">View Packet Information</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{{url_for('home')}}"
-                        style="margin-right: 300px;">Upload PCAP File</a>
+                        style="margin-right: 3rem;">Upload PCAP File</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{{url_for('view_packet_ips')}}"
-                        style="margin-right: 300px;">View Packet IP Frequency</a>
+                        style="margin-right: 3rem;">View Packet IP Frequency</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{{url_for('flow_analysis')}}"
+                        style="margin-right: 3rem;">Flow Analysis</a>
+                </li>
+                
             </ul>
+
         </div>
     </nav>
 

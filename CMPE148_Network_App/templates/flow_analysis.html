@@ -1,0 +1,74 @@
+<!-- flow_analysis.html -->
+
+{% extends "navbar.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Flow Analysis</h1>
+
+    <!-- Relevant flow analysis metrics -->
+    <p>Total Flows: {{ flow_data.total_flows }}</p>
+    <p>Most Common Source IP: {{ flow_data.most_common_source_ip }}</p>
+    <p>Most Common Destination IP: {{ flow_data.most_common_destination_ip }}</p>
+
+    <!-- Chart to visualize flow analysis -->
+    <canvas id="flowAnalysisChart" width="800" height="500"></canvas>
+
+    <!-- Include Chart.js and your JavaScript code -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Your JavaScript code here
+        var ctx = document.getElementById('flowAnalysisChart').getContext('2d');
+
+        var datasets = [];
+
+        {% for flow_key, data in flow_data.flow_chart_data.items() %}
+            var timeLabels{{ loop.index }} = {{ data.time_labels|tojson }};
+            var trafficValues{{ loop.index }} = {{ data.traffic_values|tojson }};
+            var colour = 16777215;
+            var randomColor = '#' + Math.floor(Math.random()*colour).toString(16);
+
+            datasets.push({
+                label: '{{ flow_key }}',
+                data: trafficValues{{ loop.index }},
+                borderColor: randomColor,
+                borderWidth: 2,
+                fill: false
+            });
+        {% endfor %}
+
+        var flowAnalysisChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels1,  // Assuming timeLabels1 is defined in the first iteration
+                datasets: datasets
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Network Traffic Flow Analysis (Time-Traffic)',
+                        font: {
+                            size: 20
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    },
+                    y: {
+                        type: 'linear',
+                        position: 'left'
+                    }
+                }
+            }
+        });
+    </script>
+</div>
+
+{% endblock %}
