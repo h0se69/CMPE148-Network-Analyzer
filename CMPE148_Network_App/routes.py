@@ -2,9 +2,8 @@ import io
 import json
 from CMPE148_Network_App import flaskObj
 from flask import jsonify, render_template, redirect, request, session
-from .WireSharkPCAP import get_DNS_host_name, get_list_of_ips, read_pcap_file, perform_flow_analysis
 from flask import jsonify, render_template, redirect, request, session, url_for
-from .WireSharkPCAP import get_DNS_host_name, get_list_of_ips, get_packet_sizes, read_pcap_file
+from .WireSharkPCAP import *
 
 flaskObj.config['MAX_CONTENT_LENGTH'] = 400 * 1024 * 1024 # limit file size to 400MB idk if we can handle huge files lol
 stored_packets = []
@@ -79,10 +78,14 @@ def flow_analysis():
 
     if stored_packets and is_upload_file_present:
         flow_data = perform_flow_analysis(stored_packets)
-        return render_template('flow_analysis.html', flow_data=flow_data)
-    else:
-        return render_template('error.html', error_msg= "Please upload a PCAP file to see Flow Anaylsis Chart")
+        list_of_ips = get_list_of_ips(stored_packets)
+        
+        bandwidth_info = get_bandwidth_info(stored_packets)
 
+        return render_template('flow_analysis.html', flow_data=flow_data, bandwidth_info=bandwidth_info)
+    else:
+        return render_template('error.html', error_msg="Please upload a PCAP file to see Flow Anaylsis Chart")
+  
 @flaskObj.route("/")
 def home():
     return render_template("home.html")

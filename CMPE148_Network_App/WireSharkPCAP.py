@@ -6,6 +6,7 @@ import matplotlib
 # matplotlib.use('Agg')
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 socket.setdefaulttimeout(5) 
 
@@ -236,3 +237,87 @@ def mac_to_ip4(mac):
     bytes_list = [int(byte, 16) for byte in mac.split(':')[-6:]]
     ipv4_address = ".".join(map(str, bytes_list[-4:]))
     return ipv4_address
+
+def calculate_bandwidth(packets, ip_address):
+    total_bytes = 0
+    start_time = None
+    end_time = None
+
+    for packet in packets:
+        if IP in packet:
+            source_ip = get_IP_source_ip(packet)
+            destination_ip = get_IP_destination_ip(packet)
+            packet_size = len(packet)
+
+            if ip_address == source_ip or ip_address == destination_ip:
+                total_bytes += packet_size
+
+                # Update start_time and end_time
+                if start_time is None or packet.time < start_time:
+                    start_time = packet.time
+                if end_time is None or packet.time > end_time:
+                    end_time = packet.time
+
+    if start_time is not None and end_time is not None:
+        duration = end_time - start_time
+        if duration > 0:
+            # Calculate average bandwidth (bytes per second)
+            average_bandwidth_bps = total_bytes / duration
+
+            # Convert to megabits per second (Mbps)
+            average_bandwidth_mbps = average_bandwidth_bps * 8 / 1_000_000
+            return average_bandwidth_mbps
+
+    return 0
+
+# def get_bandwidth_info(packets):
+#     bandwidth_info = {}
+
+#     for packet in packets:
+#         if IP in packet:
+#             source_ip = packet[IP].src
+#             destination_ip = packet[IP].dst
+#             packet_size = len(packet)
+
+#             # Process source IP
+#             if source_ip not in bandwidth_info:
+#                 bandwidth_info[source_ip] = 0
+
+#             bandwidth_info[source_ip] += packet_size
+
+#             # Process destination IP
+#             if destination_ip not in bandwidth_info:
+#                 bandwidth_info[destination_ip] = 0
+
+#             bandwidth_info[destination_ip] += packet_size
+
+#     return bandwidth_info
+
+def get_bandwidth_info(packets):
+    bandwidth_info = {}
+
+    for packet in packets:
+        if IP in packet:
+            source_ip = packet[IP].src
+            destination_ip = packet[IP].dst
+            packet_size = len(packet)
+
+            # Process source IP
+            if source_ip not in bandwidth_info:
+                bandwidth_info[source_ip] = {'total_bandwidth': 0, 'mbps': 0}
+
+            bandwidth_info[source_ip]['total_bandwidth'] += packet_size
+
+            # Process destination IP
+            if destination_ip not in bandwidth_info:
+                bandwidth_info[destination_ip] = {'total_bandwidth': 0, 'mbps': 0}
+
+            bandwidth_info[destination_ip]['total_bandwidth'] += packet_size
+
+    # Calculate Mbps
+    for ip, data in bandwidth_info.items():
+        total_bandwidth_bytes = data['total_bandwidth']
+        total_bandwidth_mbps = total_bandwidth_bytes * 8 / 1_000_000
+        bandwidth_info[ip]['mbps'] = total_bandwidth_mbps
+
+    return bandwidth_info
