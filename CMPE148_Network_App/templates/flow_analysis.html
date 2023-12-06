@@ -69,6 +69,104 @@
             }
         });
     </script>
+
+    <h2>Bandwidth Analysis</h2>
+    <table class="table" id="bandwidthTable">
+    <thead>
+        <tr>
+            <th data-sortable="ip">IP Address</th>
+            <th data-sortable="total_bandwidth">Total Bandwidth (Bytes)</th>
+            <th data-sortable="mbps">Mbps</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ip, data in bandwidth_info.items() %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>{{ data.total_bandwidth }}</td>
+                <td>{{ data.mbps|round(2) }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <!-- Total Bytes Pie Chart -->
+    <canvas id="totalBytesChart" width="400" height="300"></canvas>
+
+    <!-- Mbps Pie Chart -->
+    <canvas id="mbpsChart" width="400" height="300"></canvas>
+
+    <!-- Include Chart.js and your JavaScript code -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+    var totalBytesLabels = {{ bandwidth_info.keys()|list|tojson }};
+    var totalBytesData = {{ bandwidth_info.values()|map(attribute='total_bandwidth')|list|tojson }};
+    
+    var totalBytesChartCtx = document.getElementById('totalBytesChart').getContext('2d');
+    var smallChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false, // Set to false to allow manual size control
+    };
+    var totalBytesChart = new Chart(totalBytesChartCtx, {
+        type: 'pie',
+        data: {
+            labels: totalBytesLabels,
+            datasets: [{
+                data: totalBytesData,
+                backgroundColor: getRandomColors(totalBytesLabels.length),
+            }],
+        },
+        options: {
+            smallChartOptions,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Total Bytes vs IP Address',
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        }
+    });
+
+    var mbpsLabels = {{ bandwidth_info.keys()|list|tojson }};
+    var mbpsData = {{ bandwidth_info.values()|map(attribute='mbps')|list|tojson }};
+    
+    var mbpsChartCtx = document.getElementById('mbpsChart').getContext('2d');
+    var mbpsChart = new Chart(mbpsChartCtx, {
+        type: 'pie',
+        data: {
+            labels: mbpsLabels,
+            datasets: [{
+                data: mbpsData,
+                backgroundColor: getRandomColors(mbpsLabels.length),
+            }],
+        },
+        options: {
+            smallChartOptions,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Mbps vs IP Address',
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        }
+    });
+
+    // Helper function to generate random colors
+    function getRandomColors(count) {
+        var colors = [];
+        for (var i = 0; i < count; i++) {
+            var randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            colors.push(randomColor);
+        }
+        return colors;
+    }
+</script>
 </div>
 
 {% endblock %}
