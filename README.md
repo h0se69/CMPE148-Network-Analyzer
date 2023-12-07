@@ -8,7 +8,7 @@ A Network Packet Application that will enable users to view packet data from upl
 
 To run this application you need:
 
-[WireShark](https://www.wireshark.org/docs/)
+[WireShark](https://www.wireshark.org/docs/) <-- Use this to export Captured Network Data as a PCAP file
 
 [Python 3.10 or Higher](https://www.python.org/downloads/release/python-3100/)
 
@@ -26,8 +26,8 @@ Start the application:
 
 cd into downloaded repo and then run
 ```bash
-Windows: py run.app
-Mac: python3 run.app
+Windows: py run.py
+Mac: python3 run.py
 ```
 
 
